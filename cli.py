@@ -163,6 +163,12 @@ def cmd_response(args):
         print(str(e))
 
 
+def cmd_publish(args):
+    """Publish static site to docs/ for GitHub Pages."""
+    from publish import publish
+    publish()
+
+
 def cmd_dashboard(args):
     """Start the web dashboard."""
     from dashboard import app
@@ -286,6 +292,10 @@ def main():
     p_resp.add_argument("channel")
     p_resp.add_argument("text")
     p_resp.set_defaults(func=cmd_response)
+
+    # publish
+    p_pub = subparsers.add_parser("publish", help="Publish static site to GitHub Pages")
+    p_pub.set_defaults(func=cmd_publish)
 
     # dashboard
     p_dash = subparsers.add_parser("dashboard", help="Start web dashboard")

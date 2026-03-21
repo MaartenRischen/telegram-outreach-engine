@@ -17,11 +17,13 @@ Discovers AI/tech Telegram channels, scrapes their public data, and prepares out
 - Tiers: Free trial, Reasoner $15, Architect $39, Collective $99
 
 ## The Offer
-- Free Architect account ($39/mo) for unlimited time
-- No obligations, no conditions
+- Free Reasoner account ($15/mo) in exchange for posting about Triall in their channel
+- It's a collaboration/barter, not charity
 
 ## Outreach Rules (non-negotiable)
 - NO em-dashes. Ever.
+- Maarten is from Holland (NOT Thailand)
+- Lead with Triall being THE hallucination fix
 - Don't educate the admin on their own topic
 - Don't assume they missed major research
 - Frame as "I built this thing" not "here's something you don't know"
