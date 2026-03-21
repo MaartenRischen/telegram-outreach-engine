@@ -34,10 +34,28 @@ def export_data():
                     pass
         enriched.append(ch_copy)
 
+    # Generate English translations for non-English messages
+    translations = {
+        'ai_machinelearning_big_data': "Hey! Subscribed to the channel, great presentation of LLM stuff.\n\nI'm Maarten, a developer from Holland. Built something that fixes the main problem with neural networks - hallucinations.\n\nTriall works like this: three models from different companies answer the same question independently. Then they anonymously peer-review each other, attack arguments, verify facts. Like peer review in science. Made-up stuff simply doesn't pass.\n\nExample: Gemini generated entire scientific papers with non-existent authors, journals and DOIs. Looked convincing. Two other models tore it apart during review.\n\nA regular neural network agrees with you. Here three models argue with each other and find the truth.\n\nWant to give you a free subscription forever, just to try it out.",
+        'gpt_news': "Hey! I read the channel, love the way you present news.\n\nI'm Maarten from Holland. Built Triall - essentially a cure for neural network hallucinations.\n\nHow it works: three models from different providers answer a question in parallel. Then they blindly review each other, find errors, attack weak arguments. Made-up facts don't pass because other models catch them.\n\nReal case: Gemini made up scientific papers with fake authors and DOIs. One model would have missed it. Three models in peer review mode found it in seconds.\n\nNeural networks are trained to agree with the user. Triall makes them argue with each other. A fundamentally different interaction pattern.\n\nWant to give you a free subscription forever, just to try it out.",
+        'ai_newz': "Hey! You can tell there's real research experience behind the channel. Quality breakdowns.\n\nI'm Maarten, a developer from Holland. Built Triall - a platform that solves hallucinations through adversarial reasoning.\n\nThree models from different companies answer independently, then conduct anonymous peer review. Attack each other's arguments, verify facts, find logical holes. Based on the H-Neurons paper (Tsinghua, arXiv 2512.01797).\n\nIn practice this kills hallucinations: Gemini fabricated entire scientific papers with fake authors and DOIs. Two other models found it and tore it apart.\n\nOne model agrees with you. Three models blindly search for truth.\n\nWant to give you a free subscription forever, just to try it out.",
+        'opendatascience': "Hey! Been following ODS for a while, strong community.\n\nI'm Maarten from Holland. Built Triall - a tool that fixes neural network hallucinations through adversarial reasoning.\n\nThree models from different providers answer a question independently, then anonymously review each other. Find errors, attack arguments, verify facts. Like peer review in science, but for LLMs.\n\nExample: Gemini made up scientific papers with non-existent authors and DOIs. One model would have accepted it as truth. Three models in review mode exposed it.\n\nBased on H-Neurons paper (Tsinghua, arXiv 2512.01797).\n\nWant to give you a free subscription forever, just to try it out.",
+        'gonzo_ml': "Hey! Your ML paper reviews are some of the best in Russian.\n\nI'm Maarten from Holland, building Triall. Essentially a cure for hallucinations: three models from different companies answer in parallel, then conduct blind peer review and attack each other's arguments.\n\nMade-up facts simply don't survive. In testing, Gemini generated scientific papers with fake authors and DOIs. The other models caught it during review.\n\nA regular LLM agrees with you (sycophancy). Three models blindly search for truth. Fundamentally different pattern.\n\nBased on H-Neurons paper (Tsinghua, arXiv 2512.01797).\n\nWant to give you a free subscription forever, just to try it out.",
+        'machinelearning_ru': "Hey! Saw the post about CodePilot for Claude Code, good content.\n\nI'm Maarten, a developer from Holland. Built Triall - a fix for neural network hallucinations.\n\nThree models from different providers answer a question in parallel, then anonymously review each other. Attack arguments, verify facts, find logical holes. Made-up stuff doesn't pass.\n\nReal example: Gemini fabricated scientific papers with non-existent authors and DOIs. Looked plausible. Two other models exposed it in peer review.\n\nLLMs are trained to agree with you. Triall makes them argue with each other and find the truth.\n\nWant to give you a free subscription forever, just to try it out.",
+        'neuraldeep': "Hey! Impressive journey from IT Admin to Head of AI in 5 years, and gptdaisy with 100k MAU is a serious project.\n\nI'm Maarten from Holland. Built Triall - essentially a hallucination killer.\n\nThree models from different companies answer independently, then conduct anonymous peer review: attack each other's arguments, verify facts. Made-up stuff doesn't pass.\n\nGemini in testing fabricated scientific papers with fake authors and DOIs. One model would have missed it. Three models in review mode tore it apart in seconds.\n\nA neural network agrees with you. Three neural networks argue and find the truth.\n\nWant to give you a free subscription forever, just to try it out.",
+        'oestick': "Hey! Channel is fire. The post about bypassing Codex limitations - spot on, and the coding agent on phone via Termius is practical.\n\nI'm Maarten from Holland. You write about pitfalls with AI. Here's the biggest pitfall everyone steps on: hallucinations.\n\nBuilt Triall. Three models from different providers answer independently, then blindly review each other. Attack arguments, verify facts. Made-up stuff doesn't pass.\n\nGemini in testing made up entire scientific papers with non-existent authors. One model would have swallowed it. Three models in peer review mode caught it.\n\nModels are trained to agree with you. Triall makes them argue with each other.\n\nWant to give you a free subscription forever, just to try it out.",
+        'nobilix': "Hey! Love the no-hype approach, and the post about Opus 4.6 vs GPT-5.3-Codex was great.\n\nI'm Maarten from Holland. Built Triall - a fix for the main problem with neural networks: hallucinations.\n\nThree models from different companies answer in parallel, then anonymously review each other. Find errors, attack arguments, verify facts. Made-up stuff doesn't survive.\n\nGemini fabricated scientific papers with fake authors and DOIs. Sounded convincing. The other two models found it during review.\n\nA regular LLM agrees with you. Three models argue and find the truth.\n\nBased on H-Neurons paper (Tsinghua, arXiv 2512.01797).\n\nWant to give you a free subscription forever, just to try it out.",
+        'the_ai_architect': "Hey! The post about 'from 40 developers down to 10' and restructuring for AI - really important topic.\n\nI'm Maarten from Holland. Built Triall - a tool that kills neural network hallucinations.\n\nThree models from different providers work in parallel: answer independently, then anonymously review each other. Attack arguments, catch made-up facts, find logical holes.\n\nWhen you work with one model, it agrees with you. When three models check each other blindly, hallucinations don't pass. Gemini in testing made up scientific papers with fake authors and DOIs. Other models caught it.\n\nWant to give you a free subscription forever, just to try it out.",
+        'countwithsasha': "Hey! Posts about Mac Mini for bots and OpenClaw for 100 rub/week - practical content, love it.\n\nI'm Maarten from Holland. You write about AI use cases. Here's a use case: the main problem with neural networks - hallucinations.\n\nBuilt Triall. Three models from different companies answer in parallel, then blindly review each other. Attack arguments, verify facts. Made-up stuff doesn't pass.\n\nGemini in testing generated scientific papers with fake authors and DOIs. One model would have accepted it as truth. Three models in review exposed it.\n\nA model agrees with you. Three models argue and find the truth.\n\nWant to give you a free subscription forever, just to try it out.",
+        'deeplearning_ru': "Hey! The post about 16 Claude agents building a C compiler for $20k - impressive.\n\nI'm Maarten from Holland. Built Triall - a fix for neural network hallucinations.\n\nThree models from different providers answer independently, then anonymously review each other. Attack arguments, verify facts, find logical holes. Made-up stuff doesn't pass.\n\nGemini fabricated scientific papers with non-existent authors and DOIs. Other models found it during review. One model would have missed it.\n\nA regular neural network agrees with you. Three neural networks argue and find the truth.\n\nWant to give you a free subscription forever, just to try it out.",
+        'evilfreelancer': "Hey Pavel!\n\nI'm Maarten from Holland. Built Triall - a fix for the hallucination problem.\n\nThree models from different companies answer in parallel, then anonymously review each other. Made-up facts don't pass peer review.\n\nGemini made up scientific papers with fake DOIs. Three models caught it. One would have missed it.\n\nA model agrees with you. Three models argue and find the truth.\n\nWant to give you a free subscription forever, just to try it out.",
+    }
+
     return {
         "channels": enriched,
         "stats": stats,
         "discovery_runs": discovery_runs,
+        "translations": translations,
     }
 
 
@@ -116,13 +134,34 @@ h2 {{ font-size:1.1rem;margin-bottom:8px; }}
   position:relative;user-select:text;-webkit-user-select:text;
   word-break:break-word;
 }}
+.btn-row {{ display:flex;gap:8px;margin-top:8px; }}
 .copy-btn {{
-  display:block;width:100%;margin-top:8px;padding:12px;
+  flex:1;padding:12px;
   background:var(--success);color:#fff;border:none;border-radius:var(--r);
   font-size:0.95rem;font-weight:600;cursor:pointer;min-height:48px;
 }}
 .copy-btn:active {{ background:#27ae60; }}
 .copy-btn.copied {{ background:var(--accent); }}
+.sent-btn {{
+  padding:12px 16px;
+  background:var(--warn);color:#fff;border:none;border-radius:var(--r);
+  font-size:0.95rem;font-weight:600;cursor:pointer;min-height:48px;white-space:nowrap;
+}}
+.sent-btn:active {{ background:#e67e22; }}
+.undo-btn {{
+  padding:8px 14px;
+  background:var(--border);color:var(--text);border:none;border-radius:var(--r);
+  font-size:0.82rem;cursor:pointer;min-height:40px;
+}}
+.translation {{
+  background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.2);border-radius:var(--r);
+  padding:10px;margin-top:8px;font-size:0.85rem;line-height:1.5;white-space:pre-wrap;display:none;
+}}
+.translation.show {{ display:block; }}
+.translate-toggle {{
+  background:none;border:1px solid var(--border);color:var(--muted);padding:6px 10px;
+  border-radius:var(--r);font-size:0.78rem;cursor:pointer;margin-top:6px;
+}}
 
 /* Channel list */
 .ch-row {{ padding:10px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px; }}
@@ -225,6 +264,33 @@ function copyMsg(id) {{
   }});
 }}
 
+// --- Sent tracking (localStorage) ---
+function getSentData() {{
+  try {{ return JSON.parse(localStorage.getItem('tg_sent') || '{{}}'); }} catch {{ return {{}}; }}
+}}
+function markAsSent(username) {{
+  const d = getSentData();
+  d[username] = {{ sent_at: new Date().toISOString() }};
+  localStorage.setItem('tg_sent', JSON.stringify(d));
+  renderOutreach();
+  renderSent();
+  // Update sent tab count
+  const sentCount = Object.keys(getSentData()).length;
+  document.querySelector('[data-tab="sent"]').textContent = `Sent (${{sentCount}})`;
+}}
+function undoSent(username) {{
+  const d = getSentData();
+  delete d[username];
+  localStorage.setItem('tg_sent', JSON.stringify(d));
+  renderOutreach();
+  renderSent();
+  const sentCount = Object.keys(getSentData()).length;
+  document.querySelector('[data-tab="sent"]').textContent = `Sent (${{sentCount}})`;
+}}
+function isSent(username) {{
+  return !!getSentData()[username];
+}}
+
 // --- Helpers ---
 function fmt(n) {{ return n ? n.toLocaleString() : '-'; }}
 function badge(status) {{ return `<span class="badge badge-${{status}}">${{status}}</span>`; }}
@@ -254,8 +320,11 @@ function renderOutreach() {{
     return;
   }}
 
-  el.innerHTML = `<h1>Outreach Queue (${{items.length}})</h1>` + items.map(ch => {{
+  const unsent = items.filter(ch => !isSent(ch.telegram_username));
+  const translations = DATA.translations || {{}};
+  el.innerHTML = `<h1>Outreach Queue (${{unsent.length}})</h1>` + (unsent.length ? unsent.map(ch => {{
     const msg = ch.messages[0];
+    const tr = translations[ch.telegram_username];
     return `
       <div class="card outreach-card">
         <div class="outreach-header">
@@ -263,34 +332,45 @@ function renderOutreach() {{
           <div class="channel-meta">${{fmt(ch.subscriber_count)}} subs &middot; ${{ch.language || '?'}} &middot; @${{ch.telegram_username}}</div>
         </div>
         <div class="msg-box" id="msg-${{msg.id}}">${{msg.message_text}}</div>
-        <button class="copy-btn" id="btn-${{msg.id}}" onclick="copyMsg(${{msg.id}})">Copy Message</button>
+        ${{tr ? `<button class="translate-toggle" onclick="this.nextElementSibling.classList.toggle('show');this.textContent=this.textContent==='EN'?'Hide EN':'EN'">EN</button><div class="translation">${{tr}}</div>` : ''}}
+        <div class="btn-row">
+          <button class="copy-btn" id="btn-${{msg.id}}" onclick="copyMsg(${{msg.id}})">Copy Message</button>
+          <button class="sent-btn" onclick="markAsSent('${{ch.telegram_username}}')">Sent</button>
+        </div>
         <div class="action-row">
           ${{tgChannelLink(ch.telegram_username)}}
           ${{tgDmLink(ch.admin_username)}}
         </div>
       </div>`;
-  }}).join('');
+  }}).join('') : '<div class="empty"><h2>All done!</h2><p>All messages have been sent</p></div>');
 }}
 
 // --- Render Sent ---
 function renderSent() {{
   const el = document.getElementById('sent');
-  const items = DATA.channels.filter(c => c.status === 'sent' || c.status === 'responded' || c.status === 'no_response');
+  const sentData = getSentData();
 
-  if (!items.length) {{
+  // Combine: DB-tracked sent + localStorage-tracked sent
+  const dbSent = DATA.channels.filter(c => c.status === 'sent' || c.status === 'responded' || c.status === 'no_response');
+  const localSent = DATA.channels.filter(c => c.status === 'message_ready' && sentData[c.telegram_username] && c.messages.length > 0);
+  const allSent = [...localSent, ...dbSent];
+
+  if (!allSent.length) {{
     el.innerHTML = '<div class="empty"><h2>No messages sent yet</h2></div>';
     return;
   }}
 
-  el.innerHTML = `<h1>Sent (${{items.length}})</h1>` + items.map(ch => {{
+  el.innerHTML = `<h1>Sent (${{allSent.length}})</h1>` + allSent.map(ch => {{
     const msg = ch.messages[0];
-    const days = msg ? daysSince(msg.sent_at) : null;
-    const overdue = days !== null && days >= 5 && ch.status === 'sent';
+    const localEntry = sentData[ch.telegram_username];
+    const sentAt = (msg && msg.sent_at) || (localEntry && localEntry.sent_at);
+    const days = daysSince(sentAt);
+    const overdue = days !== null && days >= 5 && ch.status !== 'responded';
     return `
       <div class="card ${{overdue ? 'followup' : ''}}">
         <div class="outreach-header">
-          <div class="channel-name">${{ch.title || '@'+ch.telegram_username}} ${{days !== null ? `<span class="days-badge ${{overdue ? 'days-overdue' : 'days-ok'}}">${{days}}d ago</span>` : ''}}</div>
-          <div class="channel-meta">${{fmt(ch.subscriber_count)}} subs &middot; @${{ch.telegram_username}} &middot; ${{badge(ch.status)}}</div>
+          <div class="channel-name">${{ch.title || '@'+ch.telegram_username}} ${{days !== null ? `<span class="days-badge ${{overdue ? 'days-overdue' : 'days-ok'}}">${{days}}d</span>` : ''}}</div>
+          <div class="channel-meta">${{fmt(ch.subscriber_count)}} subs &middot; @${{ch.telegram_username}} &middot; ${{ch.status === 'responded' ? badge('responded') : badge('sent')}}</div>
         </div>
         <div class="action-row" style="margin-bottom:8px">
           ${{tgChannelLink(ch.telegram_username)}}
@@ -298,6 +378,7 @@ function renderSent() {{
         </div>
         ${{msg ? `<details><summary>Sent message</summary><div class="msg-box" style="margin-top:6px">${{msg.message_text}}</div></details>` : ''}}
         ${{msg && msg.response_received && msg.response_text ? `<div class="response-box"><strong>Response:</strong> ${{msg.response_text}}</div>` : ''}}
+        ${{localEntry ? `<button class="undo-btn" style="margin-top:8px" onclick="undoSent('${{ch.telegram_username}}')">Undo</button>` : ''}}
       </div>`;
   }}).join('');
 }}
@@ -385,6 +466,9 @@ renderOutreach();
 renderSent();
 renderChannels();
 renderPipeline();
+// Update sent tab count on load
+const sentCount = Object.keys(getSentData()).length;
+if (sentCount) document.querySelector('[data-tab="sent"]').textContent = `Sent (${{sentCount}})`;
 </script>
 </body>
 </html>'''
