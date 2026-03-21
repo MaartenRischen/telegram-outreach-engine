@@ -88,17 +88,28 @@ h2 {{ font-size:1.1rem;margin-bottom:8px; }}
 
 /* Outreach card */
 .outreach-card {{ margin-bottom:14px; }}
-.outreach-header {{ display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px; }}
+.outreach-header {{ margin-bottom:10px; }}
 .channel-name {{ font-weight:700;font-size:1rem; }}
+.channel-name a {{ color:var(--text);text-decoration:none; }}
 .channel-meta {{ font-size:0.8rem;color:var(--muted);margin-top:2px; }}
+.action-row {{ display:flex;gap:8px;margin-top:10px; }}
+.action-row a {{ flex:1;text-align:center; }}
+.channel-link {{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  background:var(--input);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:var(--r);
+  text-decoration:none;font-size:0.85rem;font-weight:600;white-space:nowrap;
+  min-height:44px;
+}}
+.channel-link:active {{ background:var(--border); }}
 .admin-link {{
-  display:inline-flex;align-items:center;gap:6px;
-  background:var(--accent);color:#fff;padding:8px 14px;border-radius:var(--r);
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  background:var(--accent);color:#fff;padding:10px 14px;border-radius:var(--r);
   text-decoration:none;font-size:0.85rem;font-weight:600;white-space:nowrap;
   min-height:44px;
 }}
 .admin-link:active {{ background:var(--accent2); }}
-.admin-link svg {{ width:18px;height:18px;fill:currentColor;flex-shrink:0; }}
+.admin-link svg, .channel-link svg {{ width:18px;height:18px;fill:currentColor;flex-shrink:0; }}
+.no-admin {{ display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--border);color:var(--muted);padding:10px 14px;border-radius:var(--r);font-size:0.85rem;font-weight:600;min-height:44px;flex:1;text-align:center; }}
 .msg-box {{
   background:var(--input);border:1px solid var(--border);border-radius:var(--r);
   padding:12px;white-space:pre-wrap;font-size:0.9rem;line-height:1.5;
@@ -217,10 +228,14 @@ function copyMsg(id) {{
 // --- Helpers ---
 function fmt(n) {{ return n ? n.toLocaleString() : '-'; }}
 function badge(status) {{ return `<span class="badge badge-${{status}}">${{status}}</span>`; }}
-function tgLink(username) {{
-  if (!username) return '';
+function tgDmLink(username) {{
+  if (!username) return '<span class="no-admin">No admin found</span>';
   username = username.replace(/^@/, '');
   return `<a href="https://t.me/${{username}}" target="_blank" rel="noopener" class="admin-link">${{TG_ICON}}DM @${{username}}</a>`;
+}}
+function tgChannelLink(username) {{
+  username = username.replace(/^@/, '');
+  return `<a href="https://t.me/s/${{username}}" target="_blank" rel="noopener" class="channel-link">${{TG_ICON}}View Channel</a>`;
 }}
 function daysSince(dateStr) {{
   if (!dateStr) return null;
@@ -244,14 +259,15 @@ function renderOutreach() {{
     return `
       <div class="card outreach-card">
         <div class="outreach-header">
-          <div>
-            <div class="channel-name">@${{ch.telegram_username}}</div>
-            <div class="channel-meta">${{ch.title || ''}} &middot; ${{fmt(ch.subscriber_count)}} subs &middot; ${{ch.language || '?'}}</div>
-          </div>
-          ${{tgLink(ch.admin_username)}}
+          <div class="channel-name">${{ch.title || '@'+ch.telegram_username}}</div>
+          <div class="channel-meta">${{fmt(ch.subscriber_count)}} subs &middot; ${{ch.language || '?'}} &middot; @${{ch.telegram_username}}</div>
         </div>
         <div class="msg-box" id="msg-${{msg.id}}">${{msg.message_text}}</div>
         <button class="copy-btn" id="btn-${{msg.id}}" onclick="copyMsg(${{msg.id}})">Copy Message</button>
+        <div class="action-row">
+          ${{tgChannelLink(ch.telegram_username)}}
+          ${{tgDmLink(ch.admin_username)}}
+        </div>
       </div>`;
   }}).join('');
 }}
@@ -273,11 +289,12 @@ function renderSent() {{
     return `
       <div class="card ${{overdue ? 'followup' : ''}}">
         <div class="outreach-header">
-          <div>
-            <div class="channel-name">@${{ch.telegram_username}} ${{days !== null ? `<span class="days-badge ${{overdue ? 'days-overdue' : 'days-ok'}}">${{days}}d ago</span>` : ''}}</div>
-            <div class="channel-meta">${{ch.title || ''}} &middot; ${{fmt(ch.subscriber_count)}} subs &middot; ${{badge(ch.status)}}</div>
-          </div>
-          ${{tgLink(ch.admin_username)}}
+          <div class="channel-name">${{ch.title || '@'+ch.telegram_username}} ${{days !== null ? `<span class="days-badge ${{overdue ? 'days-overdue' : 'days-ok'}}">${{days}}d ago</span>` : ''}}</div>
+          <div class="channel-meta">${{fmt(ch.subscriber_count)}} subs &middot; @${{ch.telegram_username}} &middot; ${{badge(ch.status)}}</div>
+        </div>
+        <div class="action-row" style="margin-bottom:8px">
+          ${{tgChannelLink(ch.telegram_username)}}
+          ${{tgDmLink(ch.admin_username)}}
         </div>
         ${{msg ? `<details><summary>Sent message</summary><div class="msg-box" style="margin-top:6px">${{msg.message_text}}</div></details>` : ''}}
         ${{msg && msg.response_received && msg.response_text ? `<div class="response-box"><strong>Response:</strong> ${{msg.response_text}}</div>` : ''}}
