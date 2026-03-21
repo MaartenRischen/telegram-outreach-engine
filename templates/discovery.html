@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Pipeline Overview - TG Outreach{% endblock %}
+{% block content %}
+<h1>Pipeline Overview</h1>
+
+<div class="funnel">
+    <div class="funnel-step">
+        <div class="count">{{ stats.by_status.get('discovered', 0) }}</div>
+        <div class="step-label">Discovered</div>
+    </div>
+    <span class="funnel-arrow">&rarr;</span>
+    <div class="funnel-step">
+        <div class="count">{{ stats.by_status.get('scraped', 0) }}</div>
+        <div class="step-label">Scraped</div>
+    </div>
+    <span class="funnel-arrow">&rarr;</span>
+    <div class="funnel-step">
+        <div class="count">{{ stats.by_status.get('message_ready', 0) }}</div>
+        <div class="step-label">Message Ready</div>
+    </div>
+    <span class="funnel-arrow">&rarr;</span>
+    <div class="funnel-step">
+        <div class="count">{{ stats.by_status.get('sent', 0) }}</div>
+        <div class="step-label">Sent</div>
+    </div>
+    <span class="funnel-arrow">&rarr;</span>
+    <div class="funnel-step">
+        <div class="count">{{ stats.by_status.get('responded', 0) }}</div>
+        <div class="step-label">Responded</div>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="number">{{ stats.total_channels }}</div>
+        <div class="label">Total Channels</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.total_messages }}</div>
+        <div class="label">Messages Generated</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.messages_sent }}</div>
+        <div class="label">Messages Sent</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.response_rate }}%</div>
+        <div class="label">Response Rate</div>
+    </div>
+</div>
+
+{% if stats.by_language %}
+<div class="card">
+    <h2>Channels by Language</h2>
+    <table>
+        <thead>
+            <tr><th>Language</th><th>Count</th></tr>
+        </thead>
+        <tbody>
+            {% for lang, count in stats.by_language.items() %}
+            <tr>
+                <td>{{ lang or 'Unknown' }}</td>
+                <td>{{ count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if discovery_runs %}
+<div class="card">
+    <h2>Recent Discovery Runs</h2>
+    <table>
+        <thead>
+            <tr><th>Source</th><th>Category</th><th>Language</th><th>Found</th><th>Date</th></tr>
+        </thead>
+        <tbody>
+            {% for run in discovery_runs %}
+            <tr>
+                <td>{{ run.source }}</td>
+                <td>{{ run.query_or_category }}</td>
+                <td>{{ run.language or '-' }}</td>
+                <td>{{ run.channels_found }}</td>
+                <td>{{ run.created_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<div class="btn-group">
+    <a href="/channels?status=discovered" class="btn btn-primary">Pending Scrape ({{ stats.by_status.get('discovered', 0) }})</a>
+    <a href="/channels?status=scraped" class="btn btn-primary">Ready Queue ({{ stats.by_status.get('scraped', 0) }})</a>
+    <a href="/outreach" class="btn btn-success">Outreach Queue ({{ stats.by_status.get('message_ready', 0) }})</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-refresh every 60 seconds
+    setTimeout(() => location.reload(), 60000);
+</script>
+{% endblock %}

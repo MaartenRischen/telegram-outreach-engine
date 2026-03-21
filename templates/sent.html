@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Sent Tracking - TG Outreach{% endblock %}
+{% block content %}
+<h1>Sent Tracking ({{ items|length }})</h1>
+
+{% if not items %}
+<div class="card">
+    <p>No messages have been sent yet.</p>
+</div>
+{% endif %}
+
+{% for item in items %}
+<div class="card {% if item.needs_followup %}followup-warning{% endif %}">
+    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.75rem;">
+        <div>
+            <h2 style="margin-bottom:0.25rem;">
+                @{{ item.channel.telegram_username }}
+                {% if item.needs_followup %}
+                <span style="color:var(--warning);font-size:0.8rem;font-weight:normal;">
+                    Follow up needed ({{ item.days_since_sent }}d)
+                </span>
+                {% endif %}
+            </h2>
+            <div class="channel-detail">
+                {{ item.channel.title or '' }} |
+                {{ item.channel.language or '?' }} |
+                Sent {{ item.days_since_sent }} day{{ 's' if item.days_since_sent != 1 else '' }} ago |
+                <span class="badge badge-{{ item.channel.status }}">{{ item.channel.status }}</span>
+            </div>
+        </div>
+        <div class="btn-group">
+            {% if item.channel.status == 'sent' %}
+            <button class="btn btn-success btn-sm"
+                    onclick="recordResponse({{ item.message.id }})">Record Response</button>
+            <button class="btn btn-sm" style="background:var(--bg-input);"
+                    onclick="markNoResponse({{ item.message.id }})">No Response</button>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if item.message %}
+    <details>
+        <summary class="channel-detail" style="cursor:pointer;margin-bottom:0.5rem;"><strong>Sent Message</strong></summary>
+        <div class="message-box" style="margin-bottom:0.75rem;">{{ item.message.message_text }}</div>
+    </details>
+
+    {% if item.message.response_received and item.message.response_text %}
+    <div style="margin-top:0.5rem;">
+        <strong style="color:var(--success);">Response:</strong>
+        <div class="message-box" style="margin-top:0.25rem;border-color:var(--success);">{{ item.message.response_text }}</div>
+    </div>
+    {% endif %}
+
+    <div style="margin-top:0.75rem;">
+        <label class="channel-detail"><strong>Notes:</strong></label>
+        <textarea id="notes-{{ item.message.id }}"
+                  style="width:100%;height:60px;margin-top:0.25rem;"
+                  onchange="updateNotes({{ item.message.id }})"
+                  placeholder="Add notes...">{{ item.message.notes or '' }}</textarea>
+    </div>
+    {% endif %}
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function recordResponse(messageId) {
+        const text = prompt('Enter the response text:');
+        if (text === null) return;
+        await apiPost(`/api/record-response/${messageId}`, { response_text: text });
+        location.reload();
+    }
+    async function markNoResponse(messageId) {
+        if (!confirm('Mark as no response?')) return;
+        await apiPost(`/api/mark-no-response/${messageId}`);
+        location.reload();
+    }
+    async function updateNotes(messageId) {
+        const notes = document.getElementById(`notes-${messageId}`).value;
+        await apiPost(`/api/update-notes/${messageId}`, { notes });
+    }
+</script>
+{% endblock %}

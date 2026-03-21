@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Channel Browser - TG Outreach{% endblock %}
+{% block content %}
+<h1>Channel Browser ({{ channels|length }})</h1>
+
+<div class="filters">
+    <form method="get" style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
+        <select name="status">
+            <option value="">All Statuses</option>
+            {% for s in statuses %}
+            <option value="{{ s }}" {% if current_status == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+        </select>
+        <select name="language">
+            <option value="">All Languages</option>
+            {% for l in languages %}
+            <option value="{{ l }}" {% if current_language == l %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+        </select>
+        <select name="sort">
+            <option value="subscribers_desc" {% if current_sort == 'subscribers_desc' %}selected{% endif %}>Subscribers (high)</option>
+            <option value="subscribers_asc" {% if current_sort == 'subscribers_asc' %}selected{% endif %}>Subscribers (low)</option>
+            <option value="views_desc" {% if current_sort == 'views_desc' %}selected{% endif %}>Views (high)</option>
+            <option value="ratio_desc" {% if current_sort == 'ratio_desc' %}selected{% endif %}>Engagement (high)</option>
+            <option value="name_asc" {% if current_sort == 'name_asc' %}selected{% endif %}>Name (A-Z)</option>
+            <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest</option>
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+        <a href="/channels" class="btn btn-sm" style="background:var(--bg-input);">Clear</a>
+    </form>
+</div>
+
+<div class="card" style="overflow-x:auto;">
+    <table>
+        <thead>
+            <tr>
+                <th>Channel</th>
+                <th>Language</th>
+                <th>Subscribers</th>
+                <th>Avg Views</th>
+                <th>Engagement</th>
+                <th>Admin</th>
+                <th>Tone</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ch in channels %}
+            <tr>
+                <td>
+                    <strong>@{{ ch.telegram_username }}</strong>
+                    {% if ch.title %}<br><small class="channel-detail">{{ ch.title }}</small>{% endif %}
+                    <br><span class="expand-toggle" onclick="toggleExpand('ch-{{ ch.id }}')">details</span>
+                </td>
+                <td>{{ ch.language or '-' }}</td>
+                <td>{{ '{:,}'.format(ch.subscriber_count) if ch.subscriber_count else '-' }}</td>
+                <td>{{ '{:,}'.format(ch.avg_post_views) if ch.avg_post_views else '-' }}</td>
+                <td>{{ '%.2f%%'|format(ch.reaction_view_ratio * 100) if ch.reaction_view_ratio else '-' }}</td>
+                <td>{{ '@' + ch.admin_username if ch.admin_username else '-' }}</td>
+                <td>{{ ch.tone or '-' }}</td>
+                <td><span class="badge badge-{{ ch.status }}">{{ ch.status }}</span></td>
+            </tr>
+            <tr>
+                <td colspan="8" style="padding:0;">
+                    <div id="ch-{{ ch.id }}" class="expand-content" style="padding:1rem;">
+                        {% if ch.description %}
+                        <p class="channel-detail"><strong>Description:</strong> {{ ch.description }}</p>
+                        {% endif %}
+                        {% if ch.topics %}
+                        <p class="channel-detail"><strong>Topics:</strong> {{ ch.topics|fromjson|join(', ') }}</p>
+                        {% endif %}
+                        <p class="channel-detail">
+                            <strong>Frequency:</strong> {{ ch.post_frequency or '-' }} |
+                            <strong>Source:</strong> {{ ch.source or '-' }} |
+                            <strong>Contact:</strong> {{ ch.admin_contact or '-' }}
+                        </p>
+                        {% if ch.sample_posts %}
+                        <details style="margin-top:0.5rem;">
+                            <summary class="channel-detail" style="cursor:pointer;"><strong>Sample Posts</strong></summary>
+                            {% for post in ch.sample_posts|fromjson %}
+                            <div style="margin:0.5rem 0;padding:0.5rem;background:var(--bg);border-radius:var(--radius);font-size:0.85rem;">
+                                {{ post.text[:300] }}{% if post.text|length > 300 %}...{% endif %}
+                                <br><small class="channel-detail">
+                                    {% if post.views %}Views: {{ post.views }}{% endif %}
+                                    {% if post.date %} | {{ post.date }}{% endif %}
+                                </small>
+                            </div>
+                            {% endfor %}
+                        </details>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

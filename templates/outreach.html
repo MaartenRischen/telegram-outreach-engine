@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Outreach Queue - TG Outreach{% endblock %}
+{% block content %}
+<h1>Outreach Queue ({{ items|length }})</h1>
+
+{% if not items %}
+<div class="card">
+    <p>No messages ready for sending. Generate messages via Claude Code first.</p>
+    <p style="margin-top:0.5rem;color:var(--text-muted);">
+        Run <code>python cli.py ready</code> to see channels awaiting message generation.
+    </p>
+</div>
+{% endif %}
+
+{% for item in items %}
+<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.75rem;">
+        <div>
+            <h2 style="margin-bottom:0.25rem;">@{{ item.channel.telegram_username }}</h2>
+            <div class="channel-detail">
+                {{ item.channel.title or '' }} |
+                {{ item.channel.language or '?' }} |
+                {{ '{:,}'.format(item.channel.subscriber_count) if item.channel.subscriber_count else '?' }} subs
+                {% if item.channel.admin_username %} | Admin: @{{ item.channel.admin_username }}{% endif %}
+            </div>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-success btn-sm"
+                    onclick="markSent({{ item.message.id }})">Mark Sent</button>
+            <button class="btn btn-danger btn-sm"
+                    onclick="deleteMessage({{ item.message.id }})">Delete</button>
+        </div>
+    </div>
+
+    <div class="message-box" id="msg-{{ item.message.id }}">{{ item.message.message_text }}<button class="btn btn-primary btn-sm copy-btn"
+                onclick="copyToClipboard(document.getElementById('msg-{{ item.message.id }}').innerText.replace('Copy', '').trim(), this)">Copy</button>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function markSent(messageId) {
+        if (!confirm('Mark this message as sent?')) return;
+        await apiPost(`/api/mark-sent/${messageId}`);
+        location.reload();
+    }
+    async function deleteMessage(messageId) {
+        if (!confirm('Delete this message and reset channel to scraped?')) return;
+        await apiPost(`/api/delete-message/${messageId}`);
+        location.reload();
+    }
+</script>
+{% endblock %}

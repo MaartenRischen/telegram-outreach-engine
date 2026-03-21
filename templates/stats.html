@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Stats - TG Outreach{% endblock %}
+{% block content %}
+<h1>Pipeline Statistics</h1>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="number">{{ stats.total_channels }}</div>
+        <div class="label">Total Channels</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.total_messages }}</div>
+        <div class="label">Messages Created</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.messages_sent }}</div>
+        <div class="label">Messages Sent</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.responses_received }}</div>
+        <div class="label">Responses</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.response_rate }}%</div>
+        <div class="label">Response Rate</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Conversion Funnel</h2>
+    <div class="funnel">
+        {% set steps = [
+            ('Discovered', stats.by_status.get('discovered', 0)),
+            ('Scraped', stats.by_status.get('scraped', 0)),
+            ('Message Ready', stats.by_status.get('message_ready', 0)),
+            ('Sent', stats.by_status.get('sent', 0)),
+            ('Responded', stats.by_status.get('responded', 0)),
+        ] %}
+        {% for label, count in steps %}
+        {% if not loop.first %}<span class="funnel-arrow">&rarr;</span>{% endif %}
+        <div class="funnel-step">
+            <div class="count">{{ count }}</div>
+            <div class="step-label">{{ label }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+    <div class="card">
+        <h2>By Language</h2>
+        {% if stats.by_language %}
+        <table>
+            <thead><tr><th>Language</th><th>Channels</th><th></th></tr></thead>
+            <tbody>
+                {% for lang, count in stats.by_language.items() %}
+                <tr>
+                    <td>{{ lang or 'Unknown' }}</td>
+                    <td>{{ count }}</td>
+                    <td>
+                        <div style="background:var(--accent);height:8px;border-radius:4px;width:{{ (count / stats.total_channels * 100)|int }}%;min-width:4px;"></div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="channel-detail">No language data yet.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>By Status</h2>
+        <table>
+            <thead><tr><th>Status</th><th>Count</th><th></th></tr></thead>
+            <tbody>
+                {% for status, count in stats.by_status.items() %}
+                <tr>
+                    <td><span class="badge badge-{{ status }}">{{ status }}</span></td>
+                    <td>{{ count }}</td>
+                    <td>
+                        <div style="background:var(--accent);height:8px;border-radius:4px;width:{{ (count / stats.total_channels * 100)|int }}%;min-width:4px;"></div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if discovery_runs %}
+<div class="card" style="margin-top:1rem;">
+    <h2>Discovery Run History</h2>
+    <table>
+        <thead>
+            <tr><th>Source</th><th>Category</th><th>Language</th><th>Channels Found</th><th>Date</th></tr>
+        </thead>
+        <tbody>
+            {% for run in discovery_runs %}
+            <tr>
+                <td>{{ run.source }}</td>
+                <td>{{ run.query_or_category }}</td>
+                <td>{{ run.language or '-' }}</td>
+                <td>{{ run.channels_found }}</td>
+                <td>{{ run.created_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}
