@@ -58,7 +58,12 @@
                 <td>{{ '%.2f%%'|format(ch.reaction_view_ratio * 100) if ch.reaction_view_ratio else '-' }}</td>
                 <td>{{ '@' + ch.admin_username if ch.admin_username else '-' }}</td>
                 <td>{{ ch.tone or '-' }}</td>
-                <td><span class="badge badge-{{ ch.status }}">{{ ch.status }}</span></td>
+                <td>
+                    <span class="badge badge-{{ ch.status }}">{{ ch.status }}</span>
+                    {% if ch.status == 'discovered' %}
+                    <button class="btn btn-success btn-sm" style="margin-left:0.5rem;" onclick="scrapeOne('{{ ch.telegram_username }}', this)">Scrape</button>
+                    {% endif %}
+                </td>
             </tr>
             <tr>
                 <td colspan="8" style="padding:0;">
@@ -95,4 +100,29 @@
         </tbody>
     </table>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function scrapeOne(username, btn) {
+        btn.disabled = true;
+        btn.textContent = 'Scraping...';
+        const res = await apiPost(`/api/scrape-channel/${username}`);
+        if (res.ok) {
+            // Poll job
+            const check = async () => {
+                const resp = await fetch(`/api/job/${res.job_id}`);
+                const job = await resp.json();
+                if (job.status === 'running') {
+                    setTimeout(check, 2000);
+                } else {
+                    location.reload();
+                }
+            };
+            setTimeout(check, 2000);
+        } else {
+            btn.textContent = 'Error';
+        }
+    }
+</script>
 {% endblock %}

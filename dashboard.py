@@ -1,12 +1,39 @@
 """Flask web dashboard for Telegram Outreach Engine."""
 
 import json
+import threading
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 
 import db
+import discover
+import scrape as scrape_module
 
 app = Flask(__name__)
+
+# Track background jobs
+_jobs = {}
+_jobs_lock = threading.Lock()
+
+
+def _run_job(job_id, fn, *args, **kwargs):
+    """Run a function in a background thread, tracking status."""
+    try:
+        result = fn(*args, **kwargs)
+        with _jobs_lock:
+            _jobs[job_id]["status"] = "done"
+            _jobs[job_id]["result"] = result
+    except Exception as e:
+        with _jobs_lock:
+            _jobs[job_id]["status"] = "error"
+            _jobs[job_id]["error"] = str(e)
+
+
+def _start_job(job_id, fn, *args, **kwargs):
+    with _jobs_lock:
+        _jobs[job_id] = {"status": "running", "started": datetime.now().isoformat()}
+    t = threading.Thread(target=_run_job, args=(job_id, fn, *args), kwargs=kwargs, daemon=True)
+    t.start()
 
 
 @app.template_filter("fromjson")
@@ -185,6 +212,72 @@ def api_mark_no_response(message_id):
         conn.commit()
     conn.close()
     return jsonify({"ok": True})
+
+
+# --- Action endpoints (run discovery, scraping, add channels from UI) ---
+
+@app.route("/api/add-channels", methods=["POST"])
+def api_add_channels():
+    raw = request.json.get("channels", "")
+    usernames = [u.strip() for u in raw.replace(",", " ").split() if u.strip()]
+    if not usernames:
+        return jsonify({"error": "No channels provided"}), 400
+    added = discover.add_channels_manually(usernames)
+    return jsonify({"ok": True, "added": added, "count": len(added)})
+
+
+@app.route("/api/discover", methods=["POST"])
+def api_discover():
+    source = request.json.get("source", "tgstat")
+    category = request.json.get("category", "technology")
+    country = request.json.get("country") or None
+    pages = request.json.get("pages", 3)
+    job_id = f"discover_{source}_{category}_{datetime.now().timestamp()}"
+
+    if source == "tgstat":
+        _start_job(job_id, discover.discover_tgstat, category=category, country=country, max_pages=pages)
+    elif source == "telemetr":
+        _start_job(job_id, discover.discover_telemetr, category=category, max_pages=pages)
+    else:
+        return jsonify({"error": f"Unknown source: {source}"}), 400
+
+    return jsonify({"ok": True, "job_id": job_id})
+
+
+@app.route("/api/scrape", methods=["POST"])
+def api_scrape():
+    channel = request.json.get("channel")
+    limit = request.json.get("limit", 20)
+    job_id = f"scrape_{datetime.now().timestamp()}"
+
+    if channel:
+        _start_job(job_id, scrape_module.scrape_channels, channel_username=channel)
+    else:
+        _start_job(job_id, scrape_module.scrape_channels, limit=limit, status="discovered")
+
+    return jsonify({"ok": True, "job_id": job_id})
+
+
+@app.route("/api/scrape-channel/<username>", methods=["POST"])
+def api_scrape_single(username):
+    job_id = f"scrape_{username}_{datetime.now().timestamp()}"
+    _start_job(job_id, scrape_module.scrape_channels, channel_username=username)
+    return jsonify({"ok": True, "job_id": job_id})
+
+
+@app.route("/api/job/<job_id>")
+def api_job_status(job_id):
+    with _jobs_lock:
+        job = _jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Job not found"}), 404
+    return jsonify(job)
+
+
+@app.route("/api/cross-references/<username>", methods=["POST"])
+def api_cross_references(username):
+    found = discover.discover_cross_references(username)
+    return jsonify({"ok": True, "found": found, "count": len(found)})
 
 
 if __name__ == "__main__":

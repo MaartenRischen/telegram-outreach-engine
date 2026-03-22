@@ -49,6 +49,70 @@
     </div>
 </div>
 
+<!-- ACTION PANELS -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+
+    <!-- Add Channels -->
+    <div class="card">
+        <h2>Add Channels</h2>
+        <p class="channel-detail" style="margin-bottom:0.75rem;">Paste usernames separated by spaces or commas</p>
+        <textarea id="add-channels-input" rows="3" style="width:100%;margin-bottom:0.5rem;" placeholder="@neyroskuf @aichannel @another"></textarea>
+        <button class="btn btn-primary" onclick="addChannels()">Add Channels</button>
+        <div id="add-result" style="margin-top:0.5rem;font-size:0.85rem;"></div>
+    </div>
+
+    <!-- Discover Channels -->
+    <div class="card">
+        <h2>Discover Channels</h2>
+        <p class="channel-detail" style="margin-bottom:0.75rem;">Scrape tgstat or telemetr for AI/tech channels</p>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:end;">
+            <div>
+                <label class="channel-detail">Source</label>
+                <select id="discover-source" style="display:block;margin-top:0.25rem;">
+                    <option value="tgstat">tgstat.com</option>
+                    <option value="telemetr">telemetr.io</option>
+                </select>
+            </div>
+            <div>
+                <label class="channel-detail">Category</label>
+                <select id="discover-category" style="display:block;margin-top:0.25rem;">
+                    <option value="technology">Technology</option>
+                    <option value="ai">AI / ML</option>
+                    <option value="science">Science</option>
+                    <option value="education">Education</option>
+                    <option value="it">IT</option>
+                </select>
+            </div>
+            <div>
+                <label class="channel-detail">Pages</label>
+                <input type="number" id="discover-pages" value="3" min="1" max="10" style="display:block;margin-top:0.25rem;width:60px;">
+            </div>
+            <button class="btn btn-primary" onclick="runDiscover()" id="discover-btn">Discover</button>
+        </div>
+        <div id="discover-result" style="margin-top:0.5rem;font-size:0.85rem;"></div>
+    </div>
+</div>
+
+<!-- Scrape Panel -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+            <h2>Scrape Discovered Channels</h2>
+            <p class="channel-detail">Fetch full data (posts, subscribers, language, admin) from t.me for discovered channels</p>
+        </div>
+        <div style="display:flex;gap:0.5rem;align-items:end;">
+            <div>
+                <label class="channel-detail">Limit</label>
+                <input type="number" id="scrape-limit" value="20" min="1" max="100" style="display:block;margin-top:0.25rem;width:70px;">
+            </div>
+            <button class="btn btn-success" onclick="runScrape()" id="scrape-btn">
+                Scrape {{ stats.by_status.get('discovered', 0) }} Pending
+            </button>
+        </div>
+    </div>
+    <div id="scrape-result" style="margin-top:0.5rem;font-size:0.85rem;"></div>
+</div>
+
 {% if stats.by_language %}
 <div class="card">
     <h2>Channels by Language</h2>
@@ -101,5 +165,78 @@
 <script>
     // Auto-refresh every 60 seconds
     setTimeout(() => location.reload(), 60000);
+
+    async function addChannels() {
+        const input = document.getElementById('add-channels-input').value.trim();
+        if (!input) return;
+        const res = await apiPost('/api/add-channels', { channels: input });
+        const el = document.getElementById('add-result');
+        if (res.ok) {
+            el.innerHTML = `<span style="color:var(--success)">Added ${res.count} channel(s): ${res.added.map(u => '@'+u).join(', ') || 'all already existed'}</span>`;
+            document.getElementById('add-channels-input').value = '';
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            el.innerHTML = `<span style="color:var(--accent)">${res.error}</span>`;
+        }
+    }
+
+    async function runDiscover() {
+        const btn = document.getElementById('discover-btn');
+        btn.disabled = true;
+        btn.textContent = 'Running...';
+        const source = document.getElementById('discover-source').value;
+        const category = document.getElementById('discover-category').value;
+        const pages = parseInt(document.getElementById('discover-pages').value);
+        const el = document.getElementById('discover-result');
+        el.innerHTML = '<span style="color:var(--warning)">Discovering channels... this takes a moment due to rate limiting.</span>';
+
+        const res = await apiPost('/api/discover', { source, category, pages });
+        if (res.ok) {
+            pollJob(res.job_id, el, btn, 'Discover');
+        } else {
+            el.innerHTML = `<span style="color:var(--accent)">${res.error}</span>`;
+            btn.disabled = false;
+            btn.textContent = 'Discover';
+        }
+    }
+
+    async function runScrape() {
+        const btn = document.getElementById('scrape-btn');
+        btn.disabled = true;
+        btn.textContent = 'Scraping...';
+        const limit = parseInt(document.getElementById('scrape-limit').value);
+        const el = document.getElementById('scrape-result');
+        el.innerHTML = '<span style="color:var(--warning)">Scraping channels... this takes a moment due to rate limiting.</span>';
+
+        const res = await apiPost('/api/scrape', { limit });
+        if (res.ok) {
+            pollJob(res.job_id, el, btn, 'Scrape');
+        } else {
+            el.innerHTML = `<span style="color:var(--accent)">${res.error}</span>`;
+            btn.disabled = false;
+            btn.textContent = 'Scrape';
+        }
+    }
+
+    async function pollJob(jobId, el, btn, label) {
+        const check = async () => {
+            const resp = await fetch(`/api/job/${jobId}`);
+            const job = await resp.json();
+            if (job.status === 'running') {
+                setTimeout(check, 2000);
+            } else if (job.status === 'done') {
+                const count = Array.isArray(job.result) ? job.result.length : 0;
+                el.innerHTML = `<span style="color:var(--success)">Done! ${count} channel(s) processed.</span>`;
+                btn.disabled = false;
+                btn.textContent = label;
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                el.innerHTML = `<span style="color:var(--accent)">Error: ${job.error || 'Unknown error'}</span>`;
+                btn.disabled = false;
+                btn.textContent = label;
+            }
+        };
+        setTimeout(check, 2000);
+    }
 </script>
 {% endblock %}
