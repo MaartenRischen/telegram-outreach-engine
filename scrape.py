@@ -89,24 +89,36 @@ def _extract_admin(description):
     admin_username = None
     admin_contact = None
 
-    # Common patterns for admin username
+    # Normalize: insert spaces before @ if missing (common in TG descriptions)
+    normalized = re.sub(r'([^\s])@', r'\1 @', description)
+
+    # Common patterns for admin username (ordered by priority)
     admin_patterns = [
-        r"(?:admin|админ|contact|связь|по\s+вопросам|owner|founder|автор|обратная\s+связь|реклама|advertising|cooperation)\s*[:\-–—\s]\s*@([a-zA-Z][a-zA-Z0-9_]{4,31})",
-        r"(?:для\s+связи|for\s+contact)\s*[:\-–—\s]*@([a-zA-Z][a-zA-Z0-9_]{4,31})",
+        # Direct contact patterns
+        r"(?:admin|админ|contact|связь|по\s+вопросам|owner|founder|обратная\s+связь|сотрудничество|cooperation)\s*[:\-–—\s]\s*@([a-zA-Z][a-zA-Z0-9_]{4,31})",
+        r"(?:для\s+связи|for\s+contact|по\s+рекламе|реклама)\s*[:\-–—\s]*@([a-zA-Z][a-zA-Z0-9_]{4,31})",
+        r"(?:автор|author|created\s+by)\s*[:\-–—\s]*@([a-zA-Z][a-zA-Z0-9_]{4,31})",
+        # Reversed patterns
         r"@([a-zA-Z][a-zA-Z0-9_]{4,31})\s*(?:\-\s*)?(?:admin|админ|owner|founder|автор)",
+        # "PR:" or "ads:" patterns (common in Russian TG)
+        r"(?:PR|пр)\s*[:\-–—\s]*@([a-zA-Z][a-zA-Z0-9_]{4,31})",
     ]
     for pattern in admin_patterns:
-        match = re.search(pattern, description, re.IGNORECASE)
+        match = re.search(pattern, normalized, re.IGNORECASE)
         if match:
             admin_username = match.group(1)
             break
 
-    # If no admin pattern found, look for any @username in description
+    # If no admin pattern found, look for @usernames in description
     if not admin_username:
-        usernames = re.findall(r"@([a-zA-Z][a-zA-Z0-9_]{4,31})", description)
-        # Filter out bot usernames
-        usernames = [u for u in usernames if not u.lower().endswith("bot")]
+        usernames = re.findall(r"@([a-zA-Z][a-zA-Z0-9_]{4,31})", normalized)
+        # Filter out bots and channel self-references
+        usernames = [u for u in usernames if not u.lower().endswith("bot") and not u.lower().endswith("_channel")]
         if len(usernames) == 1:
+            admin_username = usernames[0]
+        elif len(usernames) > 1:
+            # Prefer the first username that appears after a contact-like word
+            # or just take the first one as a fallback
             admin_username = usernames[0]
 
     # Look for email
