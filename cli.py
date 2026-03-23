@@ -43,23 +43,63 @@ def cmd_discover(args):
 def cmd_add(args):
     """Manually add channels."""
     usernames = args.channels
-    added = discover.add_channels_manually(usernames)
-    print(f"\nAdded {len(added)} new channels:")
+    platform = getattr(args, "platform", "telegram")
+
+    if platform == "telegram":
+        added = discover.add_channels_manually(usernames)
+    elif platform == "instagram":
+        from scrape_instagram import add_instagram_profiles
+        added = add_instagram_profiles(usernames)
+    elif platform == "youtube":
+        from scrape_youtube import add_youtube_channels
+        added = add_youtube_channels(usernames)
+    elif platform == "x":
+        from scrape_x import add_x_profiles
+        added = add_x_profiles(usernames)
+    else:
+        print(f"Unknown platform: {platform}")
+        return
+
+    print(f"\nAdded {len(added)} new {platform} channels:")
     for u in added:
         print(f"  @{u}")
 
 
 def cmd_scrape(args):
     """Scrape channel data."""
-    if args.channel:
-        results = scrape.scrape_channels(channel_username=args.channel)
-    else:
-        status = args.status or "discovered"
-        results = scrape.scrape_channels(limit=args.limit, status=status)
+    platform = getattr(args, "platform", "telegram")
 
-    print(f"\nScraped {len(results)} channels:")
+    if platform == "instagram":
+        from scrape_instagram import scrape_instagram_channels, scrape_instagram_profile
+        if args.channel:
+            result = scrape_instagram_profile(args.channel)
+            results = [result] if result else []
+        else:
+            results = scrape_instagram_channels(limit=args.limit)
+    elif platform == "youtube":
+        from scrape_youtube import scrape_youtube_channels, scrape_youtube_channel
+        if args.channel:
+            result = scrape_youtube_channel(args.channel)
+            results = [result] if result else []
+        else:
+            results = scrape_youtube_channels(limit=args.limit)
+    elif platform == "x":
+        from scrape_x import scrape_x_channels, scrape_x_profile
+        if args.channel:
+            result = scrape_x_profile(args.channel)
+            results = [result] if result else []
+        else:
+            results = scrape_x_channels(limit=args.limit)
+    else:
+        if args.channel:
+            results = scrape.scrape_channels(channel_username=args.channel)
+        else:
+            status = args.status or "discovered"
+            results = scrape.scrape_channels(limit=args.limit, status=status)
+
+    print(f"\nScraped {len(results)} {platform} channels:")
     for r in results:
-        print(f"  @{r['username']}: {r['title']} ({r['subscriber_count']} subs, {r['language']})")
+        print(f"  @{r['username']}: {r.get('title', '?')} ({r.get('subscriber_count', '?')} subs)")
 
 
 def cmd_ready(args):
@@ -242,7 +282,7 @@ def cmd_stats(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Telegram Outreach Engine")
+    parser = argparse.ArgumentParser(description="Multi-Platform Outreach Engine")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # discover
@@ -256,6 +296,7 @@ def main():
     # add
     p_add = subparsers.add_parser("add", help="Manually add channels")
     p_add.add_argument("channels", nargs="+")
+    p_add.add_argument("--platform", "-p", default="telegram", choices=["telegram", "instagram", "youtube", "x"])
     p_add.set_defaults(func=cmd_add)
 
     # scrape
@@ -263,6 +304,7 @@ def main():
     p_scrape.add_argument("--limit", type=int, default=None)
     p_scrape.add_argument("--channel", default=None)
     p_scrape.add_argument("--status", default=None)
+    p_scrape.add_argument("--platform", "-p", default="telegram", choices=["telegram", "instagram", "youtube", "x"])
     p_scrape.set_defaults(func=cmd_scrape)
 
     # ready
