@@ -2,6 +2,7 @@
 
 import json
 import os
+from datetime import datetime
 import db
 
 
@@ -56,6 +57,7 @@ def export_data():
         "stats": stats,
         "discovery_runs": discovery_runs,
         "translations": translations,
+        "published_at": datetime.now().isoformat(),
     }
 
 
@@ -83,7 +85,10 @@ def build_html(data_json):
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>TG Outreach</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Outreach</title>
 <style>
 * {{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }}
 :root {{
@@ -212,6 +217,8 @@ details .post-snippet {{ background:var(--bg);border-radius:var(--r);padding:8px
 </style>
 </head>
 <body>
+
+<div id="pull-indicator" style="position:fixed;top:0;left:0;right:0;height:0;background:var(--accent);z-index:200;transition:height 0.2s;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.85rem;font-weight:600;"></div>
 
 <nav id="nav">
   <a href="#" data-tab="outreach" class="active">Outreach</a>
@@ -483,6 +490,54 @@ renderPipeline();
 // Update sent tab count on load
 const sentCount = Object.keys(getSentData()).length;
 if (sentCount) document.querySelector('[data-tab="sent"]').textContent = `Sent (${{sentCount}})`;
+
+// Pull-to-refresh
+(function() {{
+  let startY = 0, pulling = false;
+  const indicator = document.getElementById('pull-indicator');
+  const threshold = 80;
+
+  document.addEventListener('touchstart', e => {{
+    if (window.scrollY === 0) {{
+      startY = e.touches[0].clientY;
+      pulling = true;
+    }}
+  }}, {{passive: true}});
+
+  document.addEventListener('touchmove', e => {{
+    if (!pulling) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy > 0 && dy < 150) {{
+      const h = Math.min(dy * 0.5, 50);
+      indicator.style.height = h + 'px';
+      indicator.textContent = dy > threshold ? 'Release to refresh' : 'Pull to refresh';
+    }}
+  }}, {{passive: true}});
+
+  document.addEventListener('touchend', e => {{
+    if (!pulling) return;
+    pulling = false;
+    const h = parseInt(indicator.style.height);
+    if (h > threshold * 0.5) {{
+      indicator.textContent = 'Refreshing...';
+      indicator.style.height = '40px';
+      // Cache-bust reload
+      setTimeout(() => location.href = location.pathname + '?t=' + Date.now(), 300);
+    }} else {{
+      indicator.style.height = '0';
+    }}
+  }});
+}})();
+
+// Show last updated
+if (DATA.published_at) {{
+  const d = new Date(DATA.published_at);
+  const ts = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {{hour:'2-digit',minute:'2-digit'}});
+  const el = document.createElement('div');
+  el.style.cssText = 'text-align:center;padding:20px;color:var(--muted);font-size:0.75rem;';
+  el.textContent = 'Last updated: ' + ts;
+  document.body.appendChild(el);
+}}
 </script>
 </body>
 </html>'''
